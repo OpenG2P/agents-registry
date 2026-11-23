@@ -145,6 +145,18 @@ async def test_agent_round_trips_with_its_rows(database):
                 "SELECT agent_name, area_code, primary_specialization, qualification_count, training_count "
                 "FROM agents_rpt_agent WHERE agent_id = '99000001'"))).one()
             assert tuple(view) == ("Abeba Kebede Tola", "ET040611", "AGSPEC_CROP", 1, 0)
+            # The credential view (VC issuance): identity and role claims, keyed on the record.
+            card = (await conn.execute(text(
+                'SELECT internal_record_id, foundational_id, "functionalRecordId", "fullName", "dateOfBirth", '
+                '"position", "servicePoint" FROM agent_vc_view WHERE "functionalRecordId" = \'99000001\''))).one()
+            assert card.internal_record_id == stored.internal_record_id and card.foundational_id == "712345678901"
+            assert (card.fullName, card.dateOfBirth, card.position, card.servicePoint) == (
+                "Abeba Kebede Tola", "1990-03-04", "AGPOS_FIELD_AGENT", "Sheno FTC")
+            # An agent out of service gets no card.
+            await conn.execute(text("UPDATE g2p_register_agents SET service_status = 'AGST_RETIRED' "
+                                    "WHERE functional_record_id = '99000001'"))
+            assert (await conn.execute(text(
+                'SELECT count(*) FROM agent_vc_view WHERE "functionalRecordId" = \'99000001\''))).scalar() == 0
     finally:
         async with database.begin() as conn:
             for table in ("g2p_register_agent_specializations", "g2p_register_agent_qualifications"):
@@ -184,3 +196,21 @@ async def test_section_checks():
     qualifications = G2PRegisterDomainServiceAgentQualification()
     await qualifications.validate_domain_attributes([{"qualification_level": "AGQUAL_DIPLOMA", "year_completed": 2013}])
     assert "past year" in await _refused(qualifications, [{"year_completed": date.today().year + 1}])
+
+
+async def test_reseed_keeps_registrant_authentication(database):
+    """VC issuance's bootstrap turns on requires_registrant_authentication; an upgrade's re-seed keeps it."""
+    from pathlib import Path
+
+    seed = (Path(__file__).resolve().parents[2] / "agents-extension/src/openg2p_registry_agents_extension"
+            / "meta_data/register-metadata/10_register_definitions.sql").read_text()
+    async with database.begin() as conn:
+        await conn.execute(text("UPDATE g2p_register_definitions SET requires_registrant_authentication = TRUE "
+                                "WHERE register_id = :r"), {"r": AGENT})
+        raw = (await conn.get_raw_connection()).driver_connection
+        await raw.execute(seed)
+        kept = (await conn.execute(text("SELECT requires_registrant_authentication FROM g2p_register_definitions "
+                                        "WHERE register_id = :r"), {"r": AGENT})).scalar()
+        await conn.execute(text("UPDATE g2p_register_definitions SET requires_registrant_authentication = FALSE "
+                                "WHERE register_id = :r"), {"r": AGENT})
+    assert kept is True

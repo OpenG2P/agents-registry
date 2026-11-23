@@ -1,0 +1,28 @@
+{{- /*
+  The card designs for printed agent credentials (an agent's ID card), as the
+  Farmer Registry ships its farmer card.
+
+  Gated on the Agent Portal being deployed (registry.agentPortalApi.enabled),
+  not on vcIssuance: the registry subchart mounts this ConfigMap by name at
+  /app/pdf-templates whenever agentPortalApi.svgConfigMap is set, so it must
+  exist whenever the portal pod does. Built from the .svg files in
+  files/pdf-templates/ so a designer owns the artwork.
+*/ -}}
+{{- if .Values.registry.agentPortalApi.enabled }}
+{{- $cards := .Files.Glob "files/pdf-templates/*.svg" }}
+{{- if $cards }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-vc-card-templates
+  labels:
+    app.kubernetes.io/name: vc-card-templates
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+{{- range $path, $_ := $cards }}
+  {{ base $path }}: |-
+{{ $.Files.Get $path | indent 4 }}
+{{- end }}
+{{- end }}
+{{- end }}

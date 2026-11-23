@@ -52,7 +52,7 @@ READ_MODE = os.environ.get("MASTER_DATA_READ_MODE", "api").strip().lower()
 MASTER_DATA = {}  # "stub": the catalogue stand-in in api mode
 META = Path(__file__).resolve().parents[2] / "agents-extension/src/openg2p_registry_agents_extension/meta_data"
 
-SEED_DIRS = ["register-metadata", "activity-metadata", "awe-integration", "reporting-views"]
+SEED_DIRS = ["register-metadata", "activity-metadata", "awe-integration", "reporting-views", "vc-views"]
 
 
 async def _prepare():

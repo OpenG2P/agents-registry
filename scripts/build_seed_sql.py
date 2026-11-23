@@ -41,10 +41,11 @@ def q(value, jsonb=False) -> str:
     return "'" + str(value).replace("'", "''") + "'"
 
 
-def upsert(table: str, row: dict, conflict: str, jsonb=False, update=True) -> str:
+def upsert(table: str, row: dict, conflict: str, jsonb=False, update=True, keep=()) -> str:
+    """An upsert. ``keep``: columns set on insert only, never overwritten on a re-seed."""
     columns = ", ".join(f'"{c}"' for c in row)
     values = ", ".join(q(v, jsonb) for v in row.values())
-    keys = {c.strip() for c in conflict.split(",")}
+    keys = {c.strip().strip('"') for c in conflict.split(",")} | set(keep)
     action = "DO NOTHING"
     if update:
         action = "DO UPDATE SET " + ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in row if c not in keys)
@@ -81,7 +82,11 @@ def register_definitions_sql() -> str:
             "registrant_authentication_validity_days": 730,
             "registrant_re_auth_warning_days_before": 30,
         }
-        out.append(upsert("g2p_register_definitions", row, '"register_id"'))
+        # requires_registrant_authentication is set on insert only: the platform's
+        # VC-issuance bootstrap Job turns it on for the Agent register, and a
+        # re-seed on upgrade must not turn it back off.
+        out.append(upsert("g2p_register_definitions", row, '"register_id"',
+                          keep=("requires_registrant_authentication",)))
     return "".join(out)
 
 

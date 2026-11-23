@@ -13,11 +13,23 @@ global:
   registryHostname: '{{ .Release.Name }}.{{ tpl .Values.global.baseDomain $ }}'
 
   # Not shared with partners: no bank, insurer or OAN service reads agents
-  # through the Exchange, so the Partner API asks no Consent Manager. It still
-  # checks every partner's signature: it is deployed only to take data in (a
-  # learning platform's trainings, an existing agent system's records).
+  # through the Exchange. Every consent path is off: the Partner API asks no
+  # Consent Manager, and there is no data scope catalogue to publish (the
+  # registry has no data scopes). It still checks every partner's signature: it
+  # is deployed only to take data in (a learning platform's trainings, an
+  # existing agent system's records).
   consentEnforcementEnabled: false
+  partnerDataScopesPublicGetEnabled: false
   partnerSignatureValidationEnabled: true
+
+  # The Registry Connector (registry.registryConnector, off): the platform's
+  # optional ingestion gateway (ODK Central, webhooks, event buses → the partner
+  # API's ingest_data). Of use here only if an existing agent system pushes its
+  # records that way. Its chart does not template these, so they are literal:
+  # set the hostname, and the partner API's service (<release>-partner-api),
+  # when turning it on.
+  connectorHostname: ''
+  partnerApiService: 'agents-partner-api'
 
   # Object store: the in-cluster commons Garage (S3-compatible).
   minioHost: 'commons-garage:3900'
@@ -107,3 +119,128 @@ registry:
   # awe_meta_data/ (the Agent policies and this release's callback secret)
   # against the shared AWE database, and keycloak-init creates the approvers
   # alex.carter / nina.patel the policies name.
+
+  # No beneficiary portal: the registry's records are the agents themselves,
+  # kept by the staff who manage them. Off, as in the platform chart; set here so
+  # the overlay says so.
+  beneApi:
+    enabled: false
+
+  # The Registry Connector (ingestion gateway), off: see global.connectorHostname.
+  registryConnector:
+    enabled: false
+
+  # ── Verifiable credentials: an agent's ID card, issued at the counter ──────
+  #
+  # MASTER SWITCH: agentPortalApi.enabled, off by default.
+  #   false → nothing: no Agent Portal API or UI, no route, no card ConfigMap,
+  #           no credential_config registration. agent_vc_view is still created
+  #           by db-seed (a view over existing columns, unread).
+  #   true  → the Agent Portal is deployed; vcIssuance.enabled then mounts the
+  #           issuance routes.
+  #
+  # To issue credentials (see the platform's VC Issuance docs), the environment
+  # also needs Inji Certify (commons layer) with global.vcIssuer.did set to the
+  # same DID, the Keycloak `agent` realm, and an ID system for the agent's
+  # authentication (eSignet). With vcIssuance on, the bootstrap Job creates the
+  # eSignet client and provider row and sets the Agent register's
+  # requires_registrant_authentication (db-seed never resets it).
+  agentPortalApi:
+    enabled: false
+    # The agents-built variant of the platform's agent-portal-api image: the same
+    # service plus the agents extension (docker/agent-portal-api/Dockerfile). The
+    # platform's image would create the reference registry's tables.
+    image:
+      repository: openg2p/openg2p-agents-registry-agent-portal-api
+      tag: 0.0.0-develop
+    vcIssuance:
+      enabled: false
+      # Credentials are issued from the Agent register.
+      registerId: a6e00000-0000-4000-8000-0000000a0001
+    # Card designs shipped by this chart (templates/vc-card-templates-configmap.yaml).
+    svgConfigMap: '{{ .Release.Name }}-vc-card-templates'
+    pdf:
+      title: "Agent Credential"
+      issuerName: "Ministry of Agriculture"
+    # The agent credential: identity and role. See the header of
+    # agents-extension/.../meta_data/vc-views/agent_vc_view.sql for why the rest
+    # of the record is deliberately not on the card.
+    vcDefinitions:
+      - config_id: OpenG2PAgentCredential
+        credential_types: ["VerifiableCredential", "OpenG2PAgentCredential"]
+        view: agent_vc_view
+        claim_columns: ["functionalRecordId", "fullName", "dateOfBirth", "gender", "position", "servicePoint",
+                        "assignedArea"]
+        svg_template: agent-card.svg
+        display_name: "Agent Credential"
+        # The id the QR carries in claim-169's generic "Data" slot.
+        qr_data_label: "Agent ID"
+        # Registered with Certify by the subchart's credential-config-register
+        # Job; the issuer (DID and signing key) comes from global.vcIssuer.
+        certifyConfig:
+          credentialConfigKeyId: OpenG2PAgentCredential
+          credentialFormat: ldp_vc
+          credentialTypes: ["VerifiableCredential", "OpenG2PAgentCredential"]
+          contextURLs: ["https://www.w3.org/2018/credentials/v1"]
+          scope: openg2p_agent_vc_ldp
+          # The compact claim-169 QR (what an offline verifier reads), as the
+          # Farmer Registry's: claim-169 attribute names only, the Agent ID in the
+          # generic "Data" slot (see the Farmer Registry chart for why not "Data
+          # issuer").
+          qrSettings:
+            - claim169:
+                Version: '1.0'
+                Language: eng
+                Full Name: '${fullName}'
+                Date of Birth: '${dateOfBirth}'
+                Gender: '${gender}'
+                Data: '${functionalRecordId}'
+          qrSignatureAlgo: ES256
+          displayOrder: ["functionalRecordId", "fullName", "position", "servicePoint", "assignedArea",
+                         "dateOfBirth", "gender"]
+          metaDataDisplay:
+            - name: "OpenG2P Agent Credential"
+              locale: en
+          credentialSubjectDefinition:
+            functionalRecordId: { display: [{ name: "Agent ID", locale: en }] }
+            fullName: { display: [{ name: "Full Name", locale: en }] }
+            dateOfBirth: { display: [{ name: "Date of Birth", locale: en }] }
+            gender: { display: [{ name: "Gender", locale: en }] }
+            position: { display: [{ name: "Position", locale: en }] }
+            servicePoint: { display: [{ name: "Service Point", locale: en }] }
+            assignedArea: { display: [{ name: "Assigned Area", locale: en }] }
+          # Readable JSON, base64-encoded for Certify by the register Job.
+          # ${_issuer} / ${_holderId} / ${validFrom} / ${validUntil} are filled by
+          # Certify; the rest are the pushed claims.
+          vcTemplateJson: |
+            {
+              "@context": [
+                "https://www.w3.org/2018/credentials/v1",
+                {
+                  "OpenG2PAgentCredential": "https://openg2p.org/ns#OpenG2PAgentCredential",
+                  "functionalRecordId": "https://schema.org/identifier",
+                  "fullName": "https://schema.org/name",
+                  "dateOfBirth": "https://schema.org/birthDate",
+                  "gender": "https://schema.org/gender",
+                  "position": "https://schema.org/jobTitle",
+                  "servicePoint": "https://schema.org/workLocation",
+                  "assignedArea": "https://schema.org/areaServed"
+                },
+                "https://w3id.org/security/suites/ed25519-2020/v1"
+              ],
+              "issuer": "${_issuer}",
+              "type": ["VerifiableCredential", "OpenG2PAgentCredential"],
+              "issuanceDate": "${validFrom}",
+              "expirationDate": "${validUntil}",
+              "credentialSubject": {
+                "id": "${_holderId}",
+                "functionalRecordId": "${functionalRecordId}",
+                "fullName": "${fullName}",
+                "dateOfBirth": "${dateOfBirth}",
+                "gender": "${gender}",
+                "position": "${position}",
+                "servicePoint": "${servicePoint}",
+                "assignedArea": "${assignedArea}",
+                "claim169": { "qrCode": "${claim_169_values.get(0)}" }
+              }
+            }
