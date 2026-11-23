@@ -1,0 +1,80 @@
+{
+  "description": "Agent trainings: one context per agent (the Agent ID); each training completed and each certification awarded is an activity against the agent, a record of this registry's Agent register. Read by the registry platform (see g2p_activity_register_config); the domain service keeps the context, the agent's training summary and the samples in code.",
+  "register_mnemonic": "AgentTraining",
+  "context_fields": [
+    "agent_id"
+  ],
+  "subject": {
+    "subject_type": "AGENT_ID"
+  },
+  "ui_hints": {
+    "summary_fields": [
+      "agent_id",
+      "topic",
+      "course_title",
+      "certification",
+      "hours",
+      "result"
+    ],
+    "context_columns": [
+      "agent_id",
+      "training_count",
+      "training_hours",
+      "last_training_on",
+      "last_training_title",
+      "latest_certification",
+      "latest_certification_valid_until"
+    ],
+    "batch_carry_fields": [
+      "topic",
+      "course_title",
+      "course_code",
+      "provider",
+      "start_date",
+      "end_date",
+      "hours",
+      "delivery_mode",
+      "geo_lowest_level_value_id"
+    ],
+    "search_placeholder": "Search agent, course, certificate…",
+    "context_search_placeholder": "Search by Agent ID"
+  },
+  "search_fields": [
+    "agent_id",
+    "course_title",
+    "course_code",
+    "provider",
+    "certification",
+    "certificate_number"
+  ],
+  "rules": [
+    {
+      "id": "failed_course_has_score",
+      "description": "A failed course usually records the score.",
+      "applies_to": [
+        "TRAINING_COMPLETED"
+      ],
+      "when": {
+        "==": [
+          {
+            "var": "payload.result"
+          },
+          "AGTRS_FAILED"
+        ]
+      },
+      "check": {
+        "!=": [
+          {
+            "var": [
+              "payload.score",
+              null
+            ]
+          },
+          null
+        ]
+      },
+      "message": "The course was failed but no score was recorded",
+      "severity": "warn"
+    }
+  ]
+}

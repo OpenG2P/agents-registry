@@ -1,0 +1,24 @@
+# Questions for keys this chart sets that the registry chart's form does not ask.
+# Appended verbatim to the generated questions.yaml at package time by
+# openg2p/packaging ci/chart/inherit-questions.sh, AFTER the questions inherited
+# from openg2p-registry (images, hostnames, DB seed, ...) — so this file is a bare
+# list of questions, NOT a `questions:` document. Variables here address the ROOT
+# chart and are NOT path-prefixed.
+
+# Sample data is two switches: registry.dbSeed.loadSampleData (inherited "Load
+# Sample Data" question: the sample agents) and this one (their sample
+# trainings, recorded by the Celery worker). Both are off by default.
+- variable: registry.celeryWorker.envVars.REGISTRY_CELERY_WORKERS_ACTIVITY_LOAD_SAMPLE_DATA
+  label: "Load sample trainings"
+  description: >-
+    Record sample trainings and certifications for the sample agents, once,
+    after install. Needs "Load Sample Data" (the sample agents). Leave off for
+    production. If the samples cannot be loaded, the install fails (see the
+    activity-samples Job's log).
+  type: enum
+  options:
+    - "false"
+    - "true"
+  default: "false"
+  group: "Agents Registry"
+  show_if: "registry.dbSeed.loadSampleData=true"

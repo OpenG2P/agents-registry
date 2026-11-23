@@ -1,0 +1,109 @@
+# Agents Registry — values overlay for the openg2p-registry chart.
+#
+#     helm repo add openg2p https://openg2p.github.io/openg2p-helm
+#     helm dependency build ./helm/openg2p-agents-registry
+#     helm -n <ns> install agents ./helm/openg2p-agents-registry
+#
+# global.* propagates to the subchart; registry.* configures the subchart itself.
+# Everything not set here is inherited from openg2p-registry.
+
+global:
+  baseDomain: '{{ .Release.Namespace }}.openg2p.org'
+  registryVariant: 'agents-registry'
+  registryHostname: '{{ .Release.Name }}.{{ tpl .Values.global.baseDomain $ }}'
+
+  # Not shared with partners: no bank, insurer or OAN service reads agents
+  # through the Exchange, so the Partner API asks no Consent Manager. It still
+  # checks every partner's signature: it is deployed only to take data in (a
+  # learning platform's trainings, an existing agent system's records).
+  consentEnforcementEnabled: false
+  partnerSignatureValidationEnabled: true
+
+  # Object store: the in-cluster commons Garage (S3-compatible).
+  minioHost: 'commons-garage:3900'
+  minioSecure: false
+
+  postgresqlHost: commons-postgresql
+  registryDB: '{{ printf "%s" .Release.Name | replace "-" "_" }}'
+  registryDBPort: 5432
+  registryDBUser: '{{ printf "%s_user" .Release.Name | replace "-" "_" }}'
+  registryDBSecret: '{{ .Release.Name }}'
+  registryDBUserPasswordKey: '{{ .Release.Name }}-db-user'
+  # No Master Data database settings: the registry reads Master Data through its
+  # API (the subchart's global.masterDataReadMode 'api').
+
+registry:
+  # Agents images, each FROM the matching openg2p-registry base image. CI
+  # rewrites these tags to the freshly built version.
+  staffApi:
+    image:
+      repository: openg2p/openg2p-agents-registry-staff-api
+      tag: 0.0.0-develop
+  partnerApi:
+    image:
+      repository: openg2p/openg2p-agents-registry-partner-api
+      tag: 0.0.0-develop
+  celeryWorker:
+    image:
+      repository: openg2p/openg2p-agents-registry-celery
+      tag: 0.0.0-develop
+    # Helm merges maps, so these add to the subchart's worker env.
+    envVars:
+      # Sample trainings for the sample agents, recorded once through the
+      # activity write path. Off by default; for a demo, turn it on together
+      # with dbSeed.loadSampleData (the trainings need the sample agents).
+      REGISTRY_CELERY_WORKERS_ACTIVITY_LOAD_SAMPLE_DATA: "false"
+  celeryBeat:
+    image:
+      repository: openg2p/openg2p-agents-registry-celery
+      tag: 0.0.0-develop
+  dbSeed:
+    image:
+      repository: openg2p/openg2p-agents-registry-db-seed
+      tag: 0.0.0-develop
+    # Off by default. When on, loads the country pack's sample agents
+    # (openg2p-data packs/<country>/samples/agents.json, the country Master Data
+    # serves) as approved Agent records, with their specializations and
+    # qualifications. Sample trainings come from the Celery sample task
+    # (celeryWorker.envVars above).
+    loadSampleData: false
+    loadImages: false
+    # No templates: this registry renders no records for partners.
+    loadTemplates: false
+    # Code lists are NOT seeded or copied into this registry: the forms and the
+    # activity checks read every AGENT_* list live from Master Data. They are the
+    # country pack's agriculture domain, loaded by the master-data chart with
+    # geoSeed.domains: [agriculture] — set there, not here.
+
+  iamRegister:
+    applicationDescription: "Agents Registry"
+    # Rancher may skip Helm hooks, and a failing post-install hook fails the
+    # whole release: run IAM registration as a regular Job (as FR and CSR do).
+    runAsHook: false
+
+  # Functional-ID pools, one per register that mints IDs: the Agent register
+  # (pool = register mnemonic in lowercase; no prefix, so an Agent ID is eight
+  # digits, e.g. 48207193). The list sections and AgentTraining need no pool.
+  # Helm merges maps, so the subchart's default pools are inherited and
+  # provisioned unused — harmless.
+  idgenerator:
+    enabled: true
+    idGenerator:
+      appConfig:
+        idTypes:
+          agent:
+            idLength: 8
+
+  # The platform's sanity suite, from its own image: the smoke tier runs on
+  # every install/upgrade. Its e2e tier seeds and searches a reference-registry
+  # record over DCI, which this registry does not serve, so it stays off.
+  sanity:
+    enabled: true
+    runE2e: false
+
+  # AWE (agent change requests and the intake form): nothing to set. The
+  # openg2p-registry chart enables it by default (global.aweEnabled: true),
+  # pointed at the shared AWE in commons-services; db-seed then runs
+  # awe_meta_data/ (the Agent policies and this release's callback secret)
+  # against the shared AWE database, and keycloak-init creates the approvers
+  # alex.carter / nina.patel the policies name.
