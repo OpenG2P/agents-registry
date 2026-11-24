@@ -1,0 +1,92 @@
+<!-- Agents Registry: the staff portal home page's dashboard image (theme value dashboard_image).
+     Edit here, then regenerate the base64 in meta_data/registry-configurations/g2p_registry_theme_values.sql. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1419" height="335" viewBox="0 0 1419 335" fill="none" role="img" aria-label="Extension agents at work: one rides a motorbike to the field, one trains farmers under a tree, one records a farmer's visit on a tablet">
+  <path d="M0 300 C 200 270, 380 285, 560 296 C 760 308, 980 270, 1180 288 C 1290 298, 1360 292, 1419 286 L1419 335 L0 335 Z" fill="#0B5563" opacity="0.18"></path>
+  <rect x="0" y="318" width="1419" height="17" fill="#0B5563" opacity="0.35"></rect>
+
+  <g>
+    <circle cx="112" cy="296" r="26" fill="none" stroke="#323459" stroke-width="9"></circle>
+    <circle cx="262" cy="296" r="26" fill="none" stroke="#323459" stroke-width="9"></circle>
+    <path d="M112 296 L160 250 L232 250 L262 296" fill="none" stroke="#323459" stroke-width="8" stroke-linejoin="round"></path>
+    <path d="M140 246 Q150 226 196 228 L240 236 Q250 250 232 254 L150 256 Z" fill="#F77F57"></path>
+    <rect x="226" y="214" width="10" height="34" rx="4" fill="#323459"></rect>
+    <rect x="218" y="208" width="30" height="8" rx="4" fill="#323459"></rect>
+    <rect x="96" y="232" width="44" height="22" rx="5" fill="#EAB54B"></rect>
+    <path d="M172 232 L196 182 Q204 168 216 178 L228 214 L214 218 L204 196 L192 236 Z" fill="#0B5563"></path>
+    <path d="M176 236 L170 284 L184 286 L194 240 Z" fill="#323459"></path>
+    <circle cx="204" cy="160" r="17" fill="#9E5D59"></circle>
+    <path d="M185 158 Q186 136 206 136 Q226 138 223 160 L210 152 L186 160 Z" fill="#F77F57"></path>
+    <rect x="183" y="155" width="42" height="6" rx="3" fill="#FFFFFF"></rect>
+  </g>
+
+  <g>
+    <rect x="508" y="150" width="20" height="170" rx="6" fill="#7A4A35"></rect>
+    <circle cx="470" cy="128" r="62" fill="#1E7F78"></circle>
+    <circle cx="560" cy="112" r="70" fill="#25968E"></circle>
+    <circle cx="518" cy="70" r="58" fill="#2FA79E"></circle>
+    <circle cx="612" cy="150" r="44" fill="#1E7F78"></circle>
+
+    <path d="M712 318 L742 168 M800 318 L770 168 M756 318 L756 250" stroke="#323459" stroke-width="7" stroke-linecap="round"></path>
+    <rect x="722" y="150" width="70" height="100" rx="4" fill="#FFFFFF" stroke="#323459" stroke-width="5"></rect>
+    <path d="M734 226 L752 204 L766 214 L782 178" fill="none" stroke="#F77F57" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+    <rect x="734" y="166" width="34" height="6" rx="3" fill="#0B5563"></rect>
+
+    <g>
+      <path d="M650 318 L652 262 L668 262 L672 318 Z" fill="#323459"></path>
+      <path d="M676 318 L678 262 L694 262 L694 318 Z" fill="#323459"></path>
+      <path d="M646 268 L650 196 Q672 178 694 196 L700 268 Z" fill="#F77F57"></path>
+      <path d="M694 204 L726 182 L732 192 L700 220 Z" fill="#F77F57"></path>
+      <circle cx="730" cy="186" r="7" fill="#9E5D59"></circle>
+      <circle cx="672" cy="168" r="19" fill="#9E5D59"></circle>
+      <path d="M652 166 Q652 144 674 144 Q694 146 692 166 Q684 156 664 160 Z" fill="#323459"></path>
+      <rect x="660" y="214" width="26" height="30" rx="3" fill="#FFFFFF" opacity="0.9"></rect>
+    </g>
+
+    <g>
+      <path d="M560 318 Q556 276 582 268 Q608 276 604 318 Z" fill="#323459"></path>
+      <circle cx="582" cy="248" r="17" fill="#FFCEB3"></circle>
+      <path d="M565 246 Q566 228 584 228 Q600 230 598 246 Q590 238 574 242 Z" fill="#342939"></path>
+      <path d="M604 318 Q600 280 624 272 Q648 280 646 318 Z" fill="#EAB54B"></path>
+      <circle cx="624" cy="254" r="16" fill="#9E5D59"></circle>
+      <path d="M608 250 Q610 234 626 234 Q640 236 640 250 Z" fill="#FFFFFF"></path>
+      <path d="M478 318 Q474 278 498 270 Q522 278 520 318 Z" fill="#0B5563"></path>
+      <circle cx="498" cy="251" r="17" fill="#FFCEB3"></circle>
+      <path d="M481 248 Q482 230 500 230 Q516 232 514 248 Q506 240 490 244 Z" fill="#342939"></path>
+    </g>
+  </g>
+
+  <g>
+    <path d="M1210 318 L1210 228 L1268 186 L1326 228 L1326 318 Z" fill="#FFFFFF" stroke="#323459" stroke-width="5" stroke-linejoin="round"></path>
+    <path d="M1196 236 L1268 178 L1340 236" fill="none" stroke="#F77F57" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"></path>
+    <rect x="1252" y="262" width="32" height="56" rx="3" fill="#323459"></rect>
+
+    <g fill="#2FA79E">
+      <path d="M920 318 Q912 292 920 276 Q928 292 920 318 Z"></path>
+      <path d="M940 318 Q930 286 942 266 Q952 288 940 318 Z"></path>
+      <path d="M1166 318 Q1158 292 1166 276 Q1174 292 1166 318 Z"></path>
+      <path d="M1186 318 Q1176 286 1188 266 Q1198 288 1186 318 Z"></path>
+    </g>
+
+    <g>
+      <path d="M1000 318 L1002 258 L1018 258 L1020 318 Z" fill="#323459"></path>
+      <path d="M1024 318 L1026 258 L1042 258 L1042 318 Z" fill="#323459"></path>
+      <path d="M994 264 L998 190 Q1020 172 1044 190 L1048 264 Z" fill="#0B5563"></path>
+      <rect x="1036" y="204" width="34" height="44" rx="5" fill="#323459"></rect>
+      <rect x="1040" y="209" width="26" height="34" rx="2" fill="#E6F4F2"></rect>
+      <path d="M1045 222 L1052 230 L1062 214" fill="none" stroke="#0B5563" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path>
+      <circle cx="1020" cy="160" r="19" fill="#FFCEB3"></circle>
+      <path d="M1000 160 Q1000 136 1022 136 Q1044 138 1040 160 Q1030 148 1010 154 Z" fill="#342939"></path>
+      <rect x="1008" y="196" width="24" height="7" rx="3" fill="#F77F57"></rect>
+    </g>
+
+    <g>
+      <path d="M1104 318 L1106 256 L1122 256 L1124 318 Z" fill="#7A4A35"></path>
+      <path d="M1128 318 L1130 256 L1146 256 L1146 318 Z" fill="#7A4A35"></path>
+      <path d="M1098 262 L1102 192 Q1124 174 1148 192 L1152 262 Z" fill="#EAB54B"></path>
+      <circle cx="1124" cy="162" r="18" fill="#9E5D59"></circle>
+      <path d="M1100 158 Q1124 124 1148 158 Z" fill="#F77F57"></path>
+      <path d="M1086 150 L1176 312" stroke="#7A4A35" stroke-width="6" stroke-linecap="round"></path>
+      <path d="M1074 140 L1090 128 L1100 150 Z" fill="#323459"></path>
+    </g>
+  </g>
+</svg>
