@@ -80,8 +80,8 @@ registry:
     # (celeryWorker.envVars above).
     loadSampleData: false
     loadImages: false
-    # No templates: this registry renders no records for partners.
-    loadTemplates: false
+    # No templates: this registry renders no records for partners; db-seed skips
+    # the upload when the image ships none.
     # Code lists are NOT seeded or copied into this registry: the forms and the
     # activity checks read every AGENT_* list live from Master Data. They are the
     # country pack's agriculture domain, loaded by the master-data chart with
@@ -115,10 +115,11 @@ registry:
 
   # AWE (agent change requests and the intake form): nothing to set. The
   # openg2p-registry chart enables it by default (global.aweEnabled: true),
-  # pointed at the shared AWE in commons-services; db-seed then runs
-  # awe_meta_data/ (the Agent policies and this release's callback secret)
-  # against the shared AWE database, and keycloak-init creates the approvers
-  # alex.carter / nina.patel the policies name.
+  # pointed at the shared AWE in commons-services; db-seed then writes this
+  # release's callback secret to the shared AWE database. The Agent approval
+  # policies (awe_meta_data/) and the demo approvers alex.carter / nina.patel
+  # they name are sample data: db-seed loads them only with loadSampleData. In
+  # production the policies are set up in AWE's admin portal.
 
   # No beneficiary portal: the registry's records are the agents themselves,
   # kept by the staff who manage them. Off, as in the platform chart; set here so
