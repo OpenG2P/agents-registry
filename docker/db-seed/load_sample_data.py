@@ -17,8 +17,11 @@ the Agent ID.
 
 geo_code_hierarchy_json is the area's ancestry read from Master Data through its
 API (the platform's /seed/mds_client.py and the MDS_* env the chart passes), in
-the shape registry-core's G2PGeoHierarchyService produces. If Master Data is
-unreachable the area id is still stored and the hierarchy left empty.
+the shape registry-core's G2PGeoHierarchyService produces.
+
+There is no fallback. Without Master Data, with no pack for the country it holds,
+or with an agent on an area it does not know, the loader stops with the reason:
+sample agents that are not the country's are worse than none.
 
 Sample trainings are not loaded here: they go through the activity APIs (the
 platform's sample task), not straight into tables.
@@ -49,6 +52,10 @@ def log(message: str) -> None:
     print(f"[load-sample-data] {message}", flush=True)
 
 
+class SampleDataError(Exception):
+    """The sample agents cannot be loaded as the country's: db-seed stops with the reason."""
+
+
 def env(name: str) -> str:
     value = os.environ.get(name, "")
     if not value:
@@ -58,47 +65,46 @@ def env(name: str) -> str:
 
 
 def master_data():
-    """The platform's Master Data API client, or None (logged) when unavailable."""
+    """The platform's Master Data API client."""
     try:
         from mds_client import MdsClient  # /seed/mds_client.py, from the RP db-seed base image
     except ImportError:
-        log("mds_client.py is not in this image — agents are stored without a geo hierarchy.")
-        return None
+        raise SampleDataError("mds_client.py is not in this image (it ships in the registry-platform "
+                              "db-seed image)") from None
     client = MdsClient.from_env()
     if client is None:
-        log("MDS_API_URL not set — agents are stored without a geo hierarchy.")
+        raise SampleDataError("MDS_API_URL is not set: the sample agents are chosen and placed by "
+                              "Master Data's geography, so Master Data is needed")
     return client
 
 
 def hierarchy(client, unit_id: str):
     """The unit's ancestry, top level first, or None when Master Data does not know it."""
-    if client is None or not unit_id:
+    if not unit_id:
         return None
     from mds_client import MdsError
 
     try:
         return client.geo_hierarchy_json(unit_id)
     except MdsError as exc:
-        log(f"could not read area {unit_id} from Master Data ({exc}).")
-        return None
+        raise SampleDataError(f"area {unit_id} could not be read from Master Data ({exc})") from None
 
 
 def sample_files() -> list[Path]:
     return sorted(DATA_DIR.glob("packs/*/samples/agents.json"))
 
 
-def choose_samples(client) -> tuple[Path, list[dict]] | tuple[None, list]:
-    """The pack whose sample agents sit on areas Master Data knows; the only one when Master Data is not set."""
+def choose_samples(client) -> tuple[Path, list[dict]]:
+    """The pack whose sample agents sit on areas Master Data knows: the country it was installed with."""
     files = sample_files()
-    if not files:
-        return None, []
-    candidates = [(path, json.loads(path.read_text())) for path in files]
-    if client is None:
-        return candidates[0] if len(candidates) == 1 else (None, [])
-    for path, agents in candidates:
+    for path in files:
+        agents = json.loads(path.read_text())
         if agents and hierarchy(client, agents[0].get("geo_pcode")):
             return path, agents
-    return None, []
+    found = ", ".join(str(p.relative_to(DATA_DIR)) for p in files) or "none"
+    raise SampleDataError(
+        f"no sample agents for the country Master Data holds (sample agents in this image: {found}). "
+        "Add packs/<country>/samples/agents.json to openg2p-data, or turn Load Sample Data off")
 
 
 def record_id(*parts: str) -> str:
@@ -130,10 +136,6 @@ def audit(name: str) -> dict:
 def main() -> None:
     mds = master_data()
     path, agents = choose_samples(mds)
-    if not agents:
-        found = ", ".join(str(p.relative_to(DATA_DIR)) for p in sample_files()) or "none"
-        log(f"No sample agents for this country (sample files: {found}) — nothing to load.")
-        return
     log(f"Loading {len(agents)} sample agents from {path.relative_to(DATA_DIR)}")
 
     conn = psycopg2.connect(
@@ -147,6 +149,9 @@ def main() -> None:
                 agent_id = agent["agent_id"]
                 parent = record_id("agent", agent_id)
                 tree = hierarchy(mds, agent.get("geo_pcode"))
+                if not tree:
+                    raise SampleDataError(f"agent {agent_id}: area {agent.get('geo_pcode')!r} is not in "
+                                          "Master Data's geography")
                 counts["agents"] += insert(cur, "g2p_register_agents", {
                     "internal_record_id": parent, "functional_record_id": agent_id,
                     **audit(agent.get("full_name") or agent_id), "search_text": search_text(agent),
@@ -155,7 +160,7 @@ def main() -> None:
                     "birth_date": agent.get("birth_date"), "foundational_id": agent.get("national_id"),
                     "mobile_number": agent.get("phone"),
                     "geo_lowest_level_value_id": agent.get("geo_pcode"),
-                    "geo_code_hierarchy_json": Json(tree) if tree else None,
+                    "geo_code_hierarchy_json": Json(tree),
                     **{field: agent.get(field) for field in AGENT_FIELDS if field != "mobile_number"},
                 })
                 for row in agent.get("specializations") or []:
@@ -183,4 +188,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SampleDataError as exc:
+        print(f"[load-sample-data] ERROR: {exc}", file=sys.stderr)
+        sys.exit(1)
