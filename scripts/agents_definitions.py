@@ -125,8 +125,17 @@ def panel(panel_id, widgets, title=None, **extra):
 
 
 def section_schema(section_key, title, panels, **extra):
-    return {"panels": [{"panels": panels, "panel-id": f"{section_key}_main", "panel-orientation": "horizontal"}],
-            "section-id": section_key, "section-title": title, "section-editable": True, **extra}
+    schema = {"panels": [{"panels": panels, "panel-id": f"{section_key}_main", "panel-orientation": "horizontal"}],
+              "section-id": section_key, "section-title": title}
+    # "section-editable": true makes every widget of the section editable in the
+    # staff portal, overriding a widget's "widget-readonly": true. A section with a
+    # read-only widget (the generated Agent ID) leaves it out, so each widget's own
+    # setting holds. Not false: the staff API refuses change requests for a section
+    # marked "section-editable": false.
+    if not any(w.get("widget-readonly") for p in panels for w in p.get("widgets", [])):
+        schema["section-editable"] = True
+    schema.update(extra)
+    return schema
 
 
 def table_schema(section_key, title, register, columns, add_label):
