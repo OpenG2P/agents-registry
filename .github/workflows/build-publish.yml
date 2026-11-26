@@ -31,6 +31,8 @@ jobs:
       images: |
         [
           {"name": "staff-api", "repo": "openg2p/openg2p-agents-registry-staff-api", "dockerfile": "docker/staff-api/Dockerfile"},
+          {"name": "staff-ui", "repo": "openg2p/openg2p-agents-registry-staff-ui", "dockerfile": "docker/staff-ui/Dockerfile"},
+          {"name": "agent-ui", "repo": "openg2p/openg2p-agents-registry-agent-ui", "dockerfile": "docker/agent-ui/Dockerfile"},
           {"name": "partner-api", "repo": "openg2p/openg2p-agents-registry-partner-api", "dockerfile": "docker/partner-api/Dockerfile"},
           {"name": "celery", "repo": "openg2p/openg2p-agents-registry-celery", "dockerfile": "docker/celery/Dockerfile"},
           {"name": "db-seed", "repo": "openg2p/openg2p-agents-registry-db-seed", "dockerfile": "docker/db-seed/Dockerfile"},
@@ -40,7 +42,7 @@ jobs:
       chart-path: helm/openg2p-agents-registry
 
       chart-image-paths: |
-        [".registry.staffApi.image.tag",".registry.partnerApi.image.tag",".registry.celeryWorker.image.tag",".registry.celeryBeat.image.tag",".registry.dbSeed.image.tag",".registry.agentPortalApi.image.tag"]
+        [".registry.staffApi.image.tag",".registry.partnerApi.image.tag",".registry.celeryWorker.image.tag",".registry.celeryBeat.image.tag",".registry.dbSeed.image.tag",".registry.staffUi.image.tag",".registry.agentPortalUi.image.tag",".registry.agentPortalApi.image.tag"]
 
       chart-inherit-questions: '{"dependency":"openg2p-registry","alias":"registry"}'
 
