@@ -20,7 +20,7 @@
 # created through the APIs by the platform's sample task.
 #
 # Build context = repo root.
-ARG RP_VERSION=0.0.0-develop.856
+ARG RP_VERSION=0.0.0-develop.858
 FROM openg2p/openg2p-registry-db-seed:${RP_VERSION}
 
 ARG OPENG2P_DATA_REPO=https://github.com/openg2p/openg2p-data.git
